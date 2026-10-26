@@ -4,8 +4,8 @@ import shlex
 
 import prompt
 
-from src.primitive_db.core import create_table, drop_table, list_tables
-from src.primitive_db.utils import load_metadata, save_metadata
+from primitive_db.core import create_table, drop_table, list_tables
+from primitive_db.utils import load_metadata, save_metadata
 
 DB_FILE = "db_meta.json"
 
@@ -35,6 +35,9 @@ def run():
             print(f"Ошибка разбора команды: {exc}. Попробуйте снова.")
             continue
 
+        if not args:
+            continue
+        
         command = args[0]
         metadata = load_metadata(DB_FILE)
 

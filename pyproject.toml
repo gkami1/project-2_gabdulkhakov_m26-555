@@ -1,24 +1,28 @@
 [project]
-name = "project-2-gabdulkhakov-m26-555"
+name = "primitive_db"
 version = "0.1.0"
-description = ""
+description = "Консольное приложение, имитирующее работу примитивной базы данных"
 authors = [
-    {name = "Your Name",email = "you@example.com"}
+    { name = "Kamil Gabdulkhakov", email = "gabdulhakovkamil@gmail.com" },
 ]
 readme = "README.md"
-requires-python = ">=3.14"
+requires-python = ">=3.12"
 dependencies = [
-    "prompt (>=0.4.1,<0.5.0)"
+    "prompt>=0.4.1",
 ]
 
-[tool.poetry]
-packages = [
-    { include = "src" },
-]
+[project.scripts]
+project = "primitive_db.main:main"
+database = "primitive_db.main:main"
 
-[tool.poetry.scripts]
-project = "src.primitive_db.main:main"
-database = "src.primitive_db.main:main"
+[build-system]
+requires = ["uv_build>=0.9,<0.12"]
+build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "ruff>=0.16.9",
+]
 
 [tool.ruff]
 line-length = 88
@@ -28,12 +32,3 @@ exclude = ["venv", ".venv", "dist", "__pycache__"]
 [tool.ruff.lint]
 select = ["E", "F", "I"]
 ignore = []
-
-[build-system]
-requires = ["poetry-core>=2.0.0,<3.0.0"]
-build-backend = "poetry.core.masonry.api"
-
-[dependency-groups]
-dev = [
-    "ruff (>=0.16.9,<0.17.0)"
-]
