@@ -29,3 +29,9 @@ KEYWORD_FROM = "from"
 KEYWORD_VALUES = "values"
 KEYWORD_WHERE = "where"
 KEYWORD_SET = "set"
+
+# Сообщения обработчика ошибок
+MSG_FILE_NOT_FOUND = (
+    "Ошибка: Файл данных не найден. Возможно, база данных не инициализирована."
+)
+MSG_UNEXPECTED_ERROR = "Произошла непредвиденная ошибка: {}"
