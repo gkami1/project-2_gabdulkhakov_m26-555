@@ -28,7 +28,15 @@ from primitive_db.constants import (
     TYPE_INT,
     VALID_TYPES,
 )
-from primitive_db.decorators import confirm_action, handle_db_errors, log_time
+from primitive_db.decorators import (
+    confirm_action,
+    create_cacher,
+    handle_db_errors,
+    log_time,
+)
+
+# Кэш результатов select, сбрасывается при любом изменении данных
+select_cache = create_cacher()
 
 
 def format_columns(columns):
@@ -107,6 +115,7 @@ def drop_table(metadata, table_name):
     """Удаляет таблицу. Возвращает обновлённые метаданные."""
     check_table_exists(metadata, table_name)
     del metadata[table_name]
+    select_cache.clear()
     print(MSG_TABLE_DROPPED.format(table_name))
     return metadata
 
@@ -135,6 +144,7 @@ def insert(metadata, table_name, table_data, values):
     record = {ID_COLUMN: new_id}
     record.update((name, value) for value, (name, _) in zip(values, columns))
     table_data.append(record)
+    select_cache.clear()
     print(MSG_RECORD_INSERTED.format(new_id, table_name))
     return table_data
 
@@ -145,9 +155,10 @@ def select(metadata, table_name, table_data, where_clause=None):
     """Возвращает записи таблицы, подходящие под условие where."""
     check_table_exists(metadata, table_name)
     if where_clause is None:
-        return table_data
+        return select_cache(table_name, lambda: table_data)
     check_clause(metadata, table_name, where_clause)
-    return find_records(table_data, where_clause)
+    cache_key = (table_name, tuple(where_clause.items()))
+    return select_cache(cache_key, lambda: find_records(table_data, where_clause))
 
 
 @handle_db_errors
@@ -163,6 +174,7 @@ def update(metadata, table_name, table_data, set_clause, where_clause):
     if not found:
         print(MSG_NO_MATCHING_RECORDS)
         return None
+    select_cache.clear()
     for record in found:
         record.update(set_clause)
         print(MSG_RECORD_UPDATED.format(record[ID_COLUMN], table_name))
@@ -180,6 +192,7 @@ def delete(metadata, table_name, table_data, where_clause):
     if not found:
         print(MSG_NO_MATCHING_RECORDS)
         return None
+    select_cache.clear()
     for record in found:
         table_data.remove(record)
         print(MSG_RECORD_DELETED.format(record[ID_COLUMN], table_name))
