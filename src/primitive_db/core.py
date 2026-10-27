@@ -102,8 +102,8 @@ def insert(metadata, table_name, table_data, values):
     columns = metadata[table_name]["columns"][1:]
     if len(values) != len(columns):
         print(
-            f"Некорректное значение: ожидалось {len(columns)} значений, "
-            f"получено {len(values)}. Попробуйте снова."
+            f"Некорректное значение: ожидалось значений: {len(columns)}, "
+            f"получено: {len(values)}. Попробуйте снова."
         )
         return None
 
