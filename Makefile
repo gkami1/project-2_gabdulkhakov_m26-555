@@ -1,8 +1,13 @@
+.PHONY: install run project build publish package-install lint
+
 install:
 	uv sync
 
-project:
+run:
 	uv run database
+
+project:
+	uv run project
 
 build:
 	uv build
