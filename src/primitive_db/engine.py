@@ -5,7 +5,7 @@ import shlex
 import prompt
 from prettytable import PrettyTable
 
-from primitive_db.constants import META_FILE
+from primitive_db.constants import META_FILE, MSG_INVALID_VALUE
 from primitive_db.core import (
     create_table,
     delete,
@@ -16,6 +16,7 @@ from primitive_db.core import (
     select,
     update,
 )
+from primitive_db.decorators import handle_db_errors
 from primitive_db.parser import (
     parse_delete,
     parse_insert,
@@ -76,6 +77,36 @@ def print_records(metadata, table_name, records):
     print(table)
 
 
+@handle_db_errors
+def handle_create_table(metadata, args):
+    """Обрабатывает команду create_table."""
+    if len(args) < 3:
+        raise ValueError(MSG_INVALID_VALUE.format("не указаны столбцы"))
+    updated = create_table(metadata, args[1], args[2:])
+    if updated is not None:
+        save_metadata(META_FILE, updated)
+
+
+@handle_db_errors
+def handle_drop_table(metadata, args):
+    """Обрабатывает команду drop_table и удаляет файл данных таблицы."""
+    if len(args) != 2:
+        raise ValueError(MSG_INVALID_VALUE.format("нужно имя таблицы"))
+    updated = drop_table(metadata, args[1])
+    if updated is not None:
+        save_metadata(META_FILE, updated)
+        delete_table_data(args[1])
+
+
+@handle_db_errors
+def handle_info(metadata, args):
+    """Обрабатывает команду info."""
+    if len(args) != 2:
+        raise ValueError(MSG_INVALID_VALUE.format("нужно имя таблицы"))
+    info(metadata, args[1], load_table_data(args[1]))
+
+
+@handle_db_errors
 def handle_insert(metadata, user_input):
     """Обрабатывает команду insert."""
     table_name, values = parse_insert(user_input)
@@ -84,6 +115,7 @@ def handle_insert(metadata, user_input):
         save_table_data(table_name, data)
 
 
+@handle_db_errors
 def handle_select(metadata, user_input):
     """Обрабатывает команду select."""
     table_name, where_clause = parse_select(user_input)
@@ -92,6 +124,7 @@ def handle_select(metadata, user_input):
         print_records(metadata, table_name, records)
 
 
+@handle_db_errors
 def handle_update(metadata, user_input):
     """Обрабатывает команду update."""
     table_name, set_clause, where_clause = parse_update(user_input)
@@ -102,6 +135,7 @@ def handle_update(metadata, user_input):
         save_table_data(table_name, data)
 
 
+@handle_db_errors
 def handle_delete(metadata, user_input):
     """Обрабатывает команду delete."""
     table_name, where_clause = parse_delete(user_input)
@@ -133,56 +167,25 @@ def run():
         command = args[0]
         metadata = load_metadata(META_FILE)
 
-        try:
-            if command == "exit":
-                break
-
-            elif command == "help":
-                print_help()
-
-            elif command == "list_tables":
-                list_tables(metadata)
-
-            elif command == "create_table":
-                if len(args) < 3:
-                    print(
-                        "Некорректное значение: не указаны столбцы. Попробуйте снова."
-                    )
-                    continue
-                updated = create_table(metadata, args[1], args[2:])
-                if updated is not None:
-                    save_metadata(META_FILE, updated)
-
-            elif command == "drop_table":
-                if len(args) != 2:
-                    print("Некорректное значение: нужно имя таблицы. Попробуйте снова.")
-                    continue
-                updated = drop_table(metadata, args[1])
-                if updated is not None:
-                    save_metadata(META_FILE, updated)
-                    delete_table_data(args[1])
-
-            elif command == "insert":
-                handle_insert(metadata, user_input)
-
-            elif command == "select":
-                handle_select(metadata, user_input)
-
-            elif command == "update":
-                handle_update(metadata, user_input)
-
-            elif command == "delete":
-                handle_delete(metadata, user_input)
-
-            elif command == "info":
-                if len(args) != 2:
-                    print("Некорректное значение: нужно имя таблицы. Попробуйте снова.")
-                    continue
-                info(metadata, args[1], load_table_data(args[1]))
-
-            else:
-                print(f"Функции {command} нет. Попробуйте снова.")
-
-        except ValueError as exc:
-            # Ошибки разбора values/where/set
-            print(f"Некорректное значение: {exc}. Попробуйте снова.")
+        if command == "exit":
+            break
+        elif command == "help":
+            print_help()
+        elif command == "list_tables":
+            list_tables(metadata)
+        elif command == "create_table":
+            handle_create_table(metadata, args)
+        elif command == "drop_table":
+            handle_drop_table(metadata, args)
+        elif command == "info":
+            handle_info(metadata, args)
+        elif command == "insert":
+            handle_insert(metadata, user_input)
+        elif command == "select":
+            handle_select(metadata, user_input)
+        elif command == "update":
+            handle_update(metadata, user_input)
+        elif command == "delete":
+            handle_delete(metadata, user_input)
+        else:
+            print(f"Функции {command} нет. Попробуйте снова.")
