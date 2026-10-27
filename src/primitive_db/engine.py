@@ -5,7 +5,32 @@ import shlex
 import prompt
 from prettytable import PrettyTable
 
-from primitive_db.constants import META_FILE, MSG_INVALID_VALUE
+from primitive_db.constants import (
+    CMD_CREATE_TABLE,
+    CMD_DELETE,
+    CMD_DROP_TABLE,
+    CMD_EXIT,
+    CMD_HELP,
+    CMD_INFO,
+    CMD_INSERT,
+    CMD_LIST_TABLES,
+    CMD_SELECT,
+    CMD_UPDATE,
+    COLUMNS_KEY,
+    CREATE_TABLE_MIN_ARGS,
+    HELP_TEXT,
+    INPUT_PROMPT,
+    META_FILE,
+    MSG_COMMAND_PARSE_ERROR,
+    MSG_INVALID_VALUE,
+    MSG_NO_COLUMNS,
+    MSG_NO_RECORDS,
+    MSG_TABLE_NAME_REQUIRED,
+    MSG_UNKNOWN_COMMAND,
+    TABLE_ALIGN,
+    TABLE_COMMAND_ARGS,
+    WELCOME_TITLE,
+)
 from primitive_db.core import (
     create_table,
     delete,
@@ -34,54 +59,34 @@ from primitive_db.utils import (
 
 def print_help():
     """Печатает справку по командам."""
-    print("\n***Процесс работы с таблицей***")
-    print("Функции:")
-    print("<command> create_table <имя_таблицы> <столбец1:тип> .. - создать таблицу")
-    print("<command> list_tables - показать список всех таблиц")
-    print("<command> drop_table <имя_таблицы> - удалить таблицу")
-    print("\n***Операции с данными***")
-    print("Функции:")
-    print(
-        "<command> insert into <имя_таблицы> values "
-        "(<значение1>, <значение2>, ...) - создать запись."
-    )
-    print(
-        "<command> select from <имя_таблицы> where <столбец> = <значение> "
-        "- прочитать записи по условию."
-    )
-    print("<command> select from <имя_таблицы> - прочитать все записи.")
-    print(
-        "<command> update <имя_таблицы> set <столбец1> = <новое_значение1> "
-        "where <столбец_условия> = <значение_условия> - обновить запись."
-    )
-    print(
-        "<command> delete from <имя_таблицы> where <столбец> = <значение> "
-        "- удалить запись."
-    )
-    print("<command> info <имя_таблицы> - вывести информацию о таблице.")
-    print("\nОбщие команды:")
-    print("<command> exit - выход из программы")
-    print("<command> help - справочная информация\n")
+    print(HELP_TEXT)
 
 
 def print_records(metadata, table_name, records):
     """Выводит записи в виде таблицы prettytable."""
     if not records:
-        print("Записи не найдены.")
+        print(MSG_NO_RECORDS)
         return
     table = PrettyTable()
-    table.field_names = [name for name, _ in metadata[table_name]["columns"]]
+    table.field_names = [name for name, _ in metadata[table_name][COLUMNS_KEY]]
     for record in records:
         table.add_row([record.get(name) for name in table.field_names])
-    table.align = "c"
+    table.align = TABLE_ALIGN
     print(table)
+
+
+def get_table_name(args):
+    """Возвращает имя таблицы из аргументов вида <команда> <таблица>."""
+    if len(args) != TABLE_COMMAND_ARGS:
+        raise ValueError(MSG_INVALID_VALUE.format(MSG_TABLE_NAME_REQUIRED))
+    return args[1]
 
 
 @handle_db_errors
 def handle_create_table(metadata, args):
     """Обрабатывает команду create_table."""
-    if len(args) < 3:
-        raise ValueError(MSG_INVALID_VALUE.format("не указаны столбцы"))
+    if len(args) < CREATE_TABLE_MIN_ARGS:
+        raise ValueError(MSG_INVALID_VALUE.format(MSG_NO_COLUMNS))
     updated = create_table(metadata, args[1], args[2:])
     if updated is not None:
         save_metadata(META_FILE, updated)
@@ -90,20 +95,18 @@ def handle_create_table(metadata, args):
 @handle_db_errors
 def handle_drop_table(metadata, args):
     """Обрабатывает команду drop_table и удаляет файл данных таблицы."""
-    if len(args) != 2:
-        raise ValueError(MSG_INVALID_VALUE.format("нужно имя таблицы"))
-    updated = drop_table(metadata, args[1])
+    table_name = get_table_name(args)
+    updated = drop_table(metadata, table_name)
     if updated is not None:
         save_metadata(META_FILE, updated)
-        delete_table_data(args[1])
+        delete_table_data(table_name)
 
 
 @handle_db_errors
 def handle_info(metadata, args):
     """Обрабатывает команду info."""
-    if len(args) != 2:
-        raise ValueError(MSG_INVALID_VALUE.format("нужно имя таблицы"))
-    info(metadata, args[1], load_table_data(args[1]))
+    table_name = get_table_name(args)
+    info(metadata, table_name, load_table_data(table_name))
 
 
 @handle_db_errors
@@ -144,21 +147,37 @@ def handle_delete(metadata, user_input):
         save_table_data(table_name, data)
 
 
+# Команды, которым нужны разобранные shlex аргументы
+ARGS_HANDLERS = {
+    CMD_CREATE_TABLE: handle_create_table,
+    CMD_DROP_TABLE: handle_drop_table,
+    CMD_INFO: handle_info,
+}
+
+# Команды, которые разбираются парсером из исходной строки
+INPUT_HANDLERS = {
+    CMD_INSERT: handle_insert,
+    CMD_SELECT: handle_select,
+    CMD_UPDATE: handle_update,
+    CMD_DELETE: handle_delete,
+}
+
+
 def run():
     """Главный цикл программы."""
-    print("***База данных***")
+    print(WELCOME_TITLE)
     print_help()
 
     while True:
         try:
-            user_input = prompt.string(">>>Введите команду: ").strip()
+            user_input = prompt.string(INPUT_PROMPT).strip()
         except (EOFError, KeyboardInterrupt):
             break
 
         try:
             args = shlex.split(user_input)
         except ValueError as exc:
-            print(f"Ошибка разбора команды: {exc}. Попробуйте снова.")
+            print(MSG_COMMAND_PARSE_ERROR.format(exc))
             continue
 
         if not args:
@@ -167,25 +186,15 @@ def run():
         command = args[0]
         metadata = load_metadata(META_FILE)
 
-        if command == "exit":
+        if command == CMD_EXIT:
             break
-        elif command == "help":
+        elif command == CMD_HELP:
             print_help()
-        elif command == "list_tables":
+        elif command == CMD_LIST_TABLES:
             list_tables(metadata)
-        elif command == "create_table":
-            handle_create_table(metadata, args)
-        elif command == "drop_table":
-            handle_drop_table(metadata, args)
-        elif command == "info":
-            handle_info(metadata, args)
-        elif command == "insert":
-            handle_insert(metadata, user_input)
-        elif command == "select":
-            handle_select(metadata, user_input)
-        elif command == "update":
-            handle_update(metadata, user_input)
-        elif command == "delete":
-            handle_delete(metadata, user_input)
+        elif command in ARGS_HANDLERS:
+            ARGS_HANDLERS[command](metadata, args)
+        elif command in INPUT_HANDLERS:
+            INPUT_HANDLERS[command](metadata, user_input)
         else:
-            print(f"Функции {command} нет. Попробуйте снова.")
+            print(MSG_UNKNOWN_COMMAND.format(command))

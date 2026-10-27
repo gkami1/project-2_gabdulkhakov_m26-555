@@ -3,13 +3,18 @@
 import json
 import os
 
-from primitive_db.constants import DATA_DIR, DATA_FILE_EXTENSION
+from primitive_db.constants import (
+    DATA_DIR,
+    DATA_FILE_EXTENSION,
+    FILE_ENCODING,
+    JSON_INDENT,
+)
 
 
 def load_metadata(filepath):
     """Загружает метаданные из JSON-файла. Возвращает {} если файла нет."""
     try:
-        with open(filepath, encoding="utf-8") as f:
+        with open(filepath, encoding=FILE_ENCODING) as f:
             return json.load(f)
     except FileNotFoundError:
         return {}
@@ -17,8 +22,8 @@ def load_metadata(filepath):
 
 def save_metadata(filepath, data):
     """Сохраняет метаданные в JSON-файл."""
-    with open(filepath, "w", encoding="utf-8") as f:
-        json.dump(data, f, ensure_ascii=False, indent=2)
+    with open(filepath, "w", encoding=FILE_ENCODING) as f:
+        json.dump(data, f, ensure_ascii=False, indent=JSON_INDENT)
 
 
 def get_table_path(table_name):
@@ -29,7 +34,7 @@ def get_table_path(table_name):
 def load_table_data(table_name):
     """Загружает записи таблицы. Возвращает [] если файла нет."""
     try:
-        with open(get_table_path(table_name), encoding="utf-8") as f:
+        with open(get_table_path(table_name), encoding=FILE_ENCODING) as f:
             return json.load(f)
     except FileNotFoundError:
         return []
@@ -38,8 +43,8 @@ def load_table_data(table_name):
 def save_table_data(table_name, data):
     """Сохраняет записи таблицы, при необходимости создаёт директорию data/."""
     os.makedirs(DATA_DIR, exist_ok=True)
-    with open(get_table_path(table_name), "w", encoding="utf-8") as f:
-        json.dump(data, f, ensure_ascii=False, indent=2)
+    with open(get_table_path(table_name), "w", encoding=FILE_ENCODING) as f:
+        json.dump(data, f, ensure_ascii=False, indent=JSON_INDENT)
 
 
 def delete_table_data(table_name):
