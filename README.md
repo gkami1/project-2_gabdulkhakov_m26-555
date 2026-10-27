@@ -7,7 +7,7 @@
 
 Полный цикл работы: создание таблицы, CRUD-операции, подтверждение удаления и удаление таблицы.
 
-[![asciicast](https://asciinema.org/a/ASCIINEMA_ID.svg)](https://asciinema.org/a/ASCIINEMA_ID)
+[![asciicast](https://asciinema.org/a/VgUwCm60LqrB0TrF.svg)](https://asciinema.org/a/VgUwCm60LqrB0TrF)
 
 ## Возможности
 
@@ -286,4 +286,4 @@ uv run ruff format .
 
 ## Автор
 
-Габдулхаков Р. (группа М26-555)
+Габдулхаков К. (группа М26-555)
