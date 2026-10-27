@@ -3,6 +3,12 @@
 Консольное приложение на Python, имитирующее работу с базой данных.
 Проект выполнен в рамках домашней работы по основам Python.
 
+## Демонстрация
+
+Полный цикл работы: создание таблицы, CRUD-операции, подтверждение удаления и удаление таблицы.
+
+[![asciicast](https://asciinema.org/a/VgUwCm60LqrB0TrF.svg)](https://asciinema.org/a/VgUwCm60LqrB0TrF)
+
 ## Возможности
 
 - Создание таблиц с типизированными столбцами (`int`, `str`, `bool`).
@@ -46,7 +52,7 @@ uv run database
 Через Makefile:
 
 ```bash
-make project
+make run
 ```
 
 Установка собранного пакета как CLI-инструмента:
@@ -211,6 +217,7 @@ project-2_gabdulkhakov_m26-555/
 │       ├── parser.py              # разбор values, where и set
 │       └── utils.py               # работа с JSON-файлами
 ├── Makefile
+├── .python-version
 ├── pyproject.toml
 ├── uv.lock
 ├── README.md
@@ -251,7 +258,8 @@ project-2_gabdulkhakov_m26-555/
 | Команда | Действие |
 |---|---|
 | `make install` | Установить зависимости (`uv sync`) |
-| `make project` | Запустить программу (`uv run database`) |
+| `make run` | Запустить программу (`uv run database`) |
+| `make project` | Запустить программу через команду `project` (`uv run project`) |
 | `make build` | Собрать пакет (`uv build`) |
 | `make publish` | Проверить метаданные пакета (`uvx twine check dist/*`) |
 | `make package-install` | Установить собранный пакет (`uv tool install dist/*.whl`) |
@@ -278,4 +286,4 @@ uv run ruff format .
 
 ## Автор
 
-Габдулхаков Р. (группа М26-555)
+Габдулхаков К. (группа М26-555)
