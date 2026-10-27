@@ -12,9 +12,17 @@ from primitive_db.constants import (
     KEYWORD_SET,
     KEYWORD_VALUES,
     KEYWORD_WHERE,
+    MSG_EMPTY_CLAUSE,
+    MSG_EMPTY_VALUE,
+    MSG_EXPECTED_KEYWORD,
+    MSG_INVALID_VALUE,
+    MSG_NO_TABLE_NAME,
+    MSG_NO_VALUES,
+    MSG_UNCLOSED_QUOTE,
     OPEN_BRACKET,
     PUNCTUATION_CHARS,
     QUOTE_CHARS,
+    TOKEN_SEPARATOR,
     TRUE_LITERAL,
 )
 
@@ -26,7 +34,17 @@ def tokenize(text):
     try:
         return list(lexer)
     except ValueError:
-        raise ValueError("незакрытая кавычка")
+        raise ValueError(MSG_INVALID_VALUE.format(MSG_UNCLOSED_QUOTE))
+
+
+def invalid_tokens(tokens, empty_message):
+    """Сообщение об ошибке для некорректного фрагмента команды."""
+    return MSG_INVALID_VALUE.format(TOKEN_SEPARATOR.join(tokens) or empty_message)
+
+
+def expected_keyword(keyword):
+    """Сообщение об отсутствующем ключевом слове."""
+    return MSG_INVALID_VALUE.format(MSG_EXPECTED_KEYWORD.format(keyword))
 
 
 def parse_value(token):
@@ -58,7 +76,7 @@ def split_by_comma(tokens):
 def parse_assignment(tokens):
     """Разбирает токены вида <столбец> = <значение> в пару (столбец, значение)."""
     if len(tokens) != 3 or tokens[1] != EQUALS_SIGN:
-        raise ValueError(" ".join(tokens) or "пустое условие")
+        raise ValueError(invalid_tokens(tokens, MSG_EMPTY_CLAUSE))
     return tokens[0], parse_value(tokens[2])
 
 
@@ -76,11 +94,11 @@ def parse_set(tokens):
 def parse_values(tokens):
     """Разбирает список значений в скобках: (<значение1>, <значение2>, ...)."""
     if len(tokens) < 3 or tokens[0] != OPEN_BRACKET or tokens[-1] != CLOSE_BRACKET:
-        raise ValueError(" ".join(tokens) or "нет значений")
+        raise ValueError(invalid_tokens(tokens, MSG_NO_VALUES))
     values = []
     for group in split_by_comma(tokens[1:-1]):
         if len(group) != 1:
-            raise ValueError(" ".join(group) or "пустое значение")
+            raise ValueError(invalid_tokens(group, MSG_EMPTY_VALUE))
         values.append(parse_value(group[0]))
     return values
 
@@ -88,7 +106,7 @@ def parse_values(tokens):
 def expect_keyword(tokens, index, keyword):
     """Проверяет, что на позиции index стоит ключевое слово keyword."""
     if len(tokens) <= index or tokens[index].lower() != keyword:
-        raise ValueError(f"ожидалось ключевое слово {keyword}")
+        raise ValueError(expected_keyword(keyword))
 
 
 def find_keyword(tokens, keyword):
@@ -112,7 +130,7 @@ def parse_select(text):
     tokens = tokenize(text)
     expect_keyword(tokens, 1, KEYWORD_FROM)
     if len(tokens) < 3:
-        raise ValueError("не указано имя таблицы")
+        raise ValueError(MSG_INVALID_VALUE.format(MSG_NO_TABLE_NAME))
     if len(tokens) == 3:
         return tokens[2], None
     expect_keyword(tokens, 3, KEYWORD_WHERE)
@@ -125,7 +143,7 @@ def parse_update(text):
     expect_keyword(tokens, 2, KEYWORD_SET)
     where_index = find_keyword(tokens, KEYWORD_WHERE)
     if where_index is None:
-        raise ValueError(f"ожидалось ключевое слово {KEYWORD_WHERE}")
+        raise ValueError(expected_keyword(KEYWORD_WHERE))
     set_clause = parse_set(tokens[3:where_index])
     where_clause = parse_where(tokens[where_index + 1 :])
     return tokens[1], set_clause, where_clause
