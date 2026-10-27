@@ -1,11 +1,14 @@
 #!/usr/bin/env python3
 
+import time
+
 import prompt
 
 from primitive_db.constants import (
     CONFIRM_PROMPT,
     CONFIRM_YES,
     MSG_ACTION_CANCELLED,
+    MSG_EXECUTION_TIME,
     MSG_FILE_NOT_FOUND,
     MSG_UNEXPECTED_ERROR,
 )
@@ -59,3 +62,15 @@ def confirm_action(action_name):
         return copy_metadata(wrapper, func)
 
     return decorator
+
+
+def log_time(func):
+    """Печатает время выполнения функции."""
+
+    def wrapper(*args, **kwargs):
+        start = time.monotonic()
+        result = func(*args, **kwargs)
+        print(MSG_EXECUTION_TIME.format(func.__name__, time.monotonic() - start))
+        return result
+
+    return copy_metadata(wrapper, func)

@@ -28,7 +28,7 @@ from primitive_db.constants import (
     TYPE_INT,
     VALID_TYPES,
 )
-from primitive_db.decorators import confirm_action, handle_db_errors
+from primitive_db.decorators import confirm_action, handle_db_errors, log_time
 
 
 def format_columns(columns):
@@ -120,6 +120,7 @@ def list_tables(metadata):
 
 
 @handle_db_errors
+@log_time
 def insert(metadata, table_name, table_data, values):
     """Добавляет запись с новым ID. Возвращает обновлённые данные."""
     check_table_exists(metadata, table_name)
@@ -139,6 +140,7 @@ def insert(metadata, table_name, table_data, values):
 
 
 @handle_db_errors
+@log_time
 def select(metadata, table_name, table_data, where_clause=None):
     """Возвращает записи таблицы, подходящие под условие where."""
     check_table_exists(metadata, table_name)

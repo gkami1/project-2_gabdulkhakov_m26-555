@@ -74,3 +74,6 @@ CONFIRM_YES = "y"
 MSG_ACTION_CANCELLED = "Операция отменена."
 ACTION_DROP_TABLE = "удаление таблицы"
 ACTION_DELETE_RECORDS = "удаление записи"
+
+# Замер времени выполнения
+MSG_EXECUTION_TIME = "Функция {} выполнилась за {:.3f} секунд."
