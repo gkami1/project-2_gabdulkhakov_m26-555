@@ -4,10 +4,9 @@ import shlex
 
 import prompt
 
+from primitive_db.constants import META_FILE
 from primitive_db.core import create_table, drop_table, list_tables
 from primitive_db.utils import load_metadata, save_metadata
-
-DB_FILE = "db_meta.json"
 
 
 def print_help():
@@ -39,7 +38,7 @@ def run():
             continue
         
         command = args[0]
-        metadata = load_metadata(DB_FILE)
+        metadata = load_metadata(META_FILE)
 
         if command == "exit":
             break
@@ -58,7 +57,7 @@ def run():
             columns = args[2:]
             updated = create_table(metadata, table_name, columns)
             if updated is not None:
-                save_metadata(DB_FILE, updated)
+                save_metadata(META_FILE, updated)
 
         elif command == "drop_table":
             if len(args) != 2:
@@ -66,7 +65,7 @@ def run():
                 continue
             updated = drop_table(metadata, args[1])
             if updated is not None:
-                save_metadata(DB_FILE, updated)
+                save_metadata(META_FILE, updated)
 
         else:
             print(f"Функции {command} нет. Попробуйте снова.")
