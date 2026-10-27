@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 
 from primitive_db.constants import (
+    ACTION_DELETE_RECORDS,
+    ACTION_DROP_TABLE,
     COLUMN_LIST_SEPARATOR,
     COLUMN_TYPE_SEPARATOR,
     COLUMNS_KEY,
@@ -26,7 +28,7 @@ from primitive_db.constants import (
     TYPE_INT,
     VALID_TYPES,
 )
-from primitive_db.decorators import handle_db_errors
+from primitive_db.decorators import confirm_action, handle_db_errors
 
 
 def format_columns(columns):
@@ -100,6 +102,7 @@ def create_table(metadata, table_name, columns):
 
 
 @handle_db_errors
+@confirm_action(ACTION_DROP_TABLE)
 def drop_table(metadata, table_name):
     """Удаляет таблицу. Возвращает обновлённые метаданные."""
     check_table_exists(metadata, table_name)
@@ -165,6 +168,7 @@ def update(metadata, table_name, table_data, set_clause, where_clause):
 
 
 @handle_db_errors
+@confirm_action(ACTION_DELETE_RECORDS)
 def delete(metadata, table_name, table_data, where_clause):
     """Удаляет записи по условию. Возвращает обновлённые данные."""
     check_table_exists(metadata, table_name)

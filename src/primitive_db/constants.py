@@ -67,3 +67,10 @@ MSG_EMPTY_CLAUSE = "пустое условие"
 MSG_NO_VALUES = "нет значений"
 MSG_EMPTY_VALUE = "пустое значение"
 TOKEN_SEPARATOR = " "
+
+# Подтверждение опасных операций
+CONFIRM_PROMPT = 'Вы уверены, что хотите выполнить "{}"? [y/n]: '
+CONFIRM_YES = "y"
+MSG_ACTION_CANCELLED = "Операция отменена."
+ACTION_DROP_TABLE = "удаление таблицы"
+ACTION_DELETE_RECORDS = "удаление записи"

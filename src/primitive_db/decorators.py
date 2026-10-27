@@ -1,6 +1,14 @@
 #!/usr/bin/env python3
 
-from primitive_db.constants import MSG_FILE_NOT_FOUND, MSG_UNEXPECTED_ERROR
+import prompt
+
+from primitive_db.constants import (
+    CONFIRM_PROMPT,
+    CONFIRM_YES,
+    MSG_ACTION_CANCELLED,
+    MSG_FILE_NOT_FOUND,
+    MSG_UNEXPECTED_ERROR,
+)
 
 
 def copy_metadata(wrapper, func):
@@ -32,3 +40,22 @@ def handle_db_errors(func):
         return None
 
     return copy_metadata(wrapper, func)
+
+
+def confirm_action(action_name):
+    """Фабрика декораторов: запрашивает подтверждение перед действием.
+
+    Если пользователь ввёл не "y", операция отменяется и возвращается None.
+    """
+
+    def decorator(func):
+        def wrapper(*args, **kwargs):
+            answer = prompt.string(CONFIRM_PROMPT.format(action_name))
+            if answer.strip().lower() != CONFIRM_YES:
+                print(MSG_ACTION_CANCELLED)
+                return None
+            return func(*args, **kwargs)
+
+        return copy_metadata(wrapper, func)
+
+    return decorator
